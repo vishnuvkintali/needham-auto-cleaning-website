@@ -2,7 +2,8 @@
 
 A fully live, professional website built for a real local car wash business in Needham, MA. Built from scratch with HTML, CSS, and JavaScript — no frameworks.
 
-**Live site:** https://needham-auto-cleaning.netlify.app
+**Live site:** https://needhamautocleaning.com  
+**Backup URL:** https://needham-auto-cleaning.netlify.app
 
 ## What I Built
 
