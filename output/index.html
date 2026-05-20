@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<!-- Single-file app. Do not split into separate CSS/JS files. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Needham Auto Cleaning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cyan: #00cfff;
+  --bg: #050a12;
+  --bg2: #0a1220;
+  --card-bg: #0d1a2a;
+  --text: #e8f4ff;
+  --muted: #6a8aaa;
+  --border: rgba(0,207,255,0.12);
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --font-head: 'Orbitron', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body.light-mode {
+  --bg: #f0f4f8;
+  --bg2: #e4eaf2;
+  --card-bg: #ffffff;
+  --text: #1a2a3a;
+  --muted: #5a7a9a;
+  --border: rgba(0,100,180,0.15);
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ===== TOOLBAR (inside nav) ===== */
+.toolbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.tool-pill {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-family: var(--font-body);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tool-pill:hover { color: var(--cyan); border-color: var(--cyan); }
+.tool-pill.copied { color: #00cc66; border-color: #00cc66; }
+
+/* ===== CLOSED NOTICES (inside contact section) ===== */
+.closed-notice {
+  display: none;
+  border-radius: 8px;
+  padding: 13px 20px;
+  margin: -40px auto 36px;
+  max-width: 1000px;
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+}
+.closed-notice.visible { display: block; }
+#closedNotice { background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.4); color: #ff6b6b; }
+#seasonNotice { background: rgba(26,44,66,0.5); border: 1px solid rgba(168,216,234,0.25); color: #a8d8ea; }
+
+/* ===== LOADER ===== */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#loader.hidden { opacity: 0; visibility: hidden; }
+
+.loader-ring {
+  width: 80px; height: 80px;
+  border: 4px solid transparent;
+  border-top-color: var(--cyan);
+  border-right-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 20px var(--cyan);
+  margin-bottom: 24px;
+}
+
+.loader-text {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ===== NAV ===== */
+#navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  background: rgba(5,10,18,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  transition: padding 0.3s;
+}
+body.light-mode #navbar { background: rgba(240,244,248,0.92); }
+#navbar.scrolled { padding: 12px 48px; }
+
+.nav-logo {
+  font-family: var(--font-head);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  text-shadow: 0 0 12px var(--cyan);
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 36px;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--cyan); }
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--cyan);
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  top: 64px; left: 0; right: 0;
+  background: rgba(5,10,18,0.97);
+  z-index: 899;
+  padding: 24px;
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+}
+body.light-mode .mobile-menu { background: rgba(240,244,248,0.98); }
+.mobile-menu.open { display: flex; }
+.mobile-menu a {
+  text-decoration: none;
+  color: var(--text);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== HERO ===== */
+#hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #0a1e35 0%, var(--bg) 70%);
+}
+body.light-mode #hero { background: radial-gradient(ellipse at center, #cde8ff 0%, var(--bg) 70%); }
+
+#bubbleCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  color: var(--text);
+  text-shadow: 0 0 30px rgba(0,207,255,0.5);
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  animation: fadeUp 1s ease 1.8s both;
+}
+
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+  animation: fadeUp 1s ease 2s both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== BUTTONS ===== */
+.btn-glow {
+  display: inline-block;
+  padding: 14px 40px;
+  background: var(--cyan);
+  color: #050a12;
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  animation: fadeUp 1s ease 2.2s both, glowPulse 2.5s ease-in-out infinite;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-glow:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(0,207,255,0.3);
+}
+@keyframes glowPulse {
+  0%,100% { box-shadow: 0 0 12px var(--cyan); }
+  50%      { box-shadow: 0 0 28px var(--cyan), 0 0 50px rgba(0,207,255,0.4); }
+}
+
+.btn-outline {
+  display: inline-block;
+  padding: 12px 32px;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  font-family: var(--font-head);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.btn-outline:hover { background: var(--cyan); color: #050a12; transform: translateY(-2px); }
+
+/* ===== SECTION BASE ===== */
+section {
+  padding: 100px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 60px;
+  color: var(--text);
+  letter-spacing: 3px;
+  position: relative;
+}
+.section-title::after {
+  content: '';
+  display: block;
+  width: 60px; height: 3px;
+  background: var(--cyan);
+  margin: 14px auto 0;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* ===== SCROLL REVEAL ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ===== ANNOUNCEMENT BANNER ===== */
+#announcement {
+  background: var(--bg);
+  padding: 0 48px 60px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.announcement-box {
+  border: 1px solid var(--cyan);
+  border-radius: 12px;
+  padding: 28px 36px;
+  background: var(--card-bg);
+  box-shadow: 0 0 24px rgba(0,207,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.announcement-left { flex: 1; min-width: 200px; }
+.announcement-label {
+  font-family: var(--font-head);
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.announcement-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.announcement-date {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 6px;
+}
+.btn-ann {
+  display: inline-block;
+  padding: 10px 24px;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-ann:hover { background: var(--cyan); color: #050a12; }
+
+/* ===== SERVICES ===== */
+#services { background: var(--bg2); max-width: 100%; }
+#services > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.service-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: -60%; left: -60%;
+  width: 220%; height: 220%;
+  background: linear-gradient(120deg, transparent 30%, rgba(0,207,255,0.08) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.service-card:hover::before { transform: translateX(60%); }
+.service-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--cyan);
+  box-shadow: 0 12px 40px rgba(0,207,255,0.15);
+}
+
+.card-icon { font-size: 2rem; margin-bottom: 16px; }
+.service-card h3 {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+.service-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; }
+.card-price { font-family: var(--font-head); font-size: 1.4rem; font-weight: 700; color: var(--text); }
+
+/* ===== SHOWCASE ===== */
+#gallery { background: var(--bg); }
+
+.gallery-img {
+  height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0,207,255,0.2);
+}
+.gallery-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-placeholder {
+  height: 260px;
+  border-radius: 12px;
+  border: 2px dashed var(--cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 1rem;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  text-shadow: 0 0 12px var(--cyan);
+  background: var(--card-bg);
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.sliders-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ba-slider {
+  position: relative;
+  height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: col-resize;
+  border: 1px solid var(--border);
+  user-select: none;
+}
+.ba-before, .ba-after {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.ba-after { clip-path: inset(0 0 0 50%); }
+.ba-handle {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 3px;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  transform: translateX(-50%);
+  cursor: col-resize;
+}
+.ba-handle::after {
+  content: '\21FA';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--cyan);
+  color: #050a12;
+  font-size: 1rem;
+  padding: 6px 8px;
+  border-radius: 50%;
+}
+.ba-label-before, .ba-label-after {
+  position: absolute;
+  bottom: 12px;
+  font-size: 0.75rem;
+  font-family: var(--font-head);
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.ba-label-before { left: 12px; background: rgba(0,0,0,0.6); color: #fff; }
+.ba-label-after  { right: 12px; background: rgba(0,207,255,0.7); color: #050a12; }
+
+/* ===== PRICING ===== */
+#pricing { background: var(--bg2); max-width: 100%; }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+  max-width: 1000px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.pricing-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px 32px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.pricing-card:hover { transform: translateY(-6px); box-shadow: 0 10px 40px rgba(0,207,255,0.1); }
+.pricing-card.popular { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0,207,255,0.15); transform: scale(1.04); }
+.pricing-card.popular:hover { transform: scale(1.04) translateY(-6px); }
+
+.popular-badge {
+  position: absolute;
+  top: -14px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--cyan);
+  color: #050a12;
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 18px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.pricing-tier { font-family: var(--font-head); font-size: 0.9rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+.pricing-price { font-family: var(--font-head); font-size: 2.5rem; font-weight: 900; color: var(--cyan); margin-bottom: 28px; }
+
+.pricing-card ul { list-style: none; margin-bottom: 32px; text-align: left; }
+.pricing-card ul li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text); }
+.pricing-card ul li::before { content: '\2713 '; color: var(--cyan); }
+.pricing-card ul li.disabled { color: rgba(106,138,170,0.7); font-style: italic; }
+.pricing-card ul li.disabled::before { content: '\2715 '; color: rgba(106,138,170,0.5); }
+
+/* ===== TESTIMONIALS ===== */
+#testimonials { background: var(--bg); }
+
+.testimonial-wrapper { max-width: 700px; margin: 0 auto; overflow: hidden; }
+.testimonial-track { display: flex; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.testimonial-card {
+  min-width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 48px 40px;
+  text-align: center;
+}
+.stars { color: var(--cyan); font-size: 1.3rem; margin-bottom: 20px; }
+.testimonial-card p { font-size: 1rem; color: var(--text); line-height: 1.8; margin-bottom: 24px; font-style: italic; }
+.reviewer { color: var(--muted); font-size: 0.85rem; letter-spacing: 1px; }
+
+.testimonial-dots { display: flex; justify-content: center; gap: 10px; margin-top: 24px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); cursor: pointer; transition: background 0.3s, transform 0.3s; }
+.dot.active { background: var(--cyan); transform: scale(1.3); box-shadow: 0 0 8px var(--cyan); }
+
+/* ===== CONTACT ===== */
+#contact { background: var(--bg2); max-width: 100%; }
+
+.contact-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.contact-form { display: flex; flex-direction: column; gap: 16px; }
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,207,255,0.15); }
+.contact-form select option { background: var(--card-bg); }
+.contact-form textarea { resize: vertical; min-height: 120px; }
+.contact-form .btn-glow { animation: none; align-self: flex-start; }
+
+.contact-info { display: flex; flex-direction: column; gap: 24px; }
+.info-block h3 { font-family: var(--font-head); font-size: 0.75rem; letter-spacing: 2px; color: var(--cyan); margin-bottom: 6px; }
+.info-block p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+.map-placeholder {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.social-links { display: flex; gap: 16px; }
+.social-links a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.social-links a:hover { color: var(--cyan); border-color: var(--cyan); }
+
+/* ===== FAQ ===== */
+#faq { background: var(--bg2); max-width: 100%; }
+.faq-list { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.faq-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.faq-item.open { border-color: rgba(0,207,255,0.3); }
+.faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 18px 24px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: color 0.2s;
+}
+.faq-q:hover { color: var(--cyan); }
+.faq-icon {
+  color: var(--cyan);
+  font-size: 1.2rem;
+  transition: transform 0.3s;
+  flex-shrink: 0;
+}
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.3s;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  padding: 0 24px;
+}
+.faq-item.open .faq-a { max-height: 200px; padding: 0 24px 18px; }
+
+/* ===== STATS ===== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 16px; text-align: center; }
+.stat-num { font-family: var(--font-head); font-size: 2rem; font-weight: 700; color: var(--cyan); text-shadow: 0 0 12px rgba(0,207,255,0.4); }
+.stat-label { color: var(--muted); font-size: 0.7rem; margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* ===== SUBMISSIONS VIEWER ===== */
+.sub-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; }
+.sub-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  text-align: left;
+  position: relative;
+}
+.sub-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.sub-name { font-weight: 600; font-size: 0.88rem; color: var(--text); }
+.sub-date { font-size: 0.72rem; color: var(--muted); }
+.sub-service {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-family: var(--font-head);
+  letter-spacing: 1px;
+  color: var(--cyan);
+  border: 1px solid var(--cyan);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-bottom: 8px;
+}
+.sub-details { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+.sub-del {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: none;
+  border: none;
+  color: rgba(255,77,77,0.3);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+.sub-del:hover { color: #ff4d4d; }
+
+/* ===== VERSION HISTORY MODAL ===== */
+.version-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 2000;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 0;
+}
+.version-modal.visible { display: flex; }
+.version-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  padding: 32px 32px 40px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+  position: relative;
+}
+.version-title {
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.version-entry { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.version-entry:last-child { border-bottom: none; margin-bottom: 0; }
+.version-tag { font-family: var(--font-head); font-size: 0.7rem; color: var(--cyan); letter-spacing: 2px; margin-bottom: 4px; }
+.version-date { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
+.version-notes { font-size: 0.82rem; color: var(--text); line-height: 1.7; }
+.version-notes li { list-style: none; padding: 2px 0; }
+.version-notes li::before { content: '— '; color: var(--muted); }
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 32px 24px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  letter-spacing: 1px;
+}
+.owner-login-btn {
+  background: none;
+  border: none;
+  color: rgba(106,138,170,0.3);
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+  letter-spacing: 1px;
+  transition: color 0.2s;
+  font-family: var(--font-body);
+}
+.owner-login-btn:hover { color: var(--muted); }
+
+/* ===== OWNER MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+
+.modal-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-close {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-logo {
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 12px var(--cyan);
+}
+.modal-subtitle {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.modal-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  outline: none;
+  text-align: center;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.modal-input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,207,255,0.15); }
+.modal-error {
+  color: #ff4d4d;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  min-height: 20px;
+  transition: opacity 0.2s;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,60% { transform: translateX(-8px); }
+  40%,80% { transform: translateX(8px); }
+}
+.modal-panel.shake { animation: shake 0.4s ease; }
+
+/* Owner dashboard panel */
+.owner-dashboard {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.dashboard-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.dashboard-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; text-align: center; }
+
+/* Dashboard menu */
+.dash-menu { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.dash-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  text-align: left;
+  width: 100%;
+}
+.dash-item:hover { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,207,255,0.1); }
+.dash-item.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+.dash-item.closed-active { border-color: #c0392b; color: #ff6b6b; }
+.dash-item.closed-active:hover { border-color: #e74c3c; box-shadow: 0 0 12px rgba(192,57,43,0.2); }
+.dash-coming {
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+.dash-arrow { color: var(--muted); font-size: 0.8rem; }
+
+.dashboard-logout {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 24px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+.dashboard-logout:hover { color: #ff4d4d; border-color: #ff4d4d; }
+
+/* Announcement maker sub-view */
+.dash-view { display: none; }
+.dash-view.active { display: block; }
+
+.dash-back {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.dash-back:hover { color: var(--cyan); }
+
+.ann-field {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+}
+.ann-field:focus { border-color: var(--cyan); }
+.ann-field-msg { min-height: 90px; resize: vertical; }
+
+.ann-post-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--cyan);
+  color: #050a12;
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: opacity 0.2s;
+}
+.ann-post-btn:hover { opacity: 0.85; }
+
+.ann-divider {
+  font-family: var(--font-head);
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  text-align: left;
+}
+.ann-saved-list { display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; }
+.ann-saved-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+}
+.ann-saved-info { flex: 1; min-width: 0; }
+.ann-saved-title { font-size: 0.85rem; color: var(--text); font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ann-saved-date { font-size: 0.72rem; color: var(--muted); }
+.ann-live-badge {
+  font-size: 0.6rem;
+  background: var(--cyan);
+  color: #050a12;
+  border-radius: 999px;
+  padding: 1px 7px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+.ann-del-btn {
+  background: none;
+  border: none;
+  color: rgba(255,77,77,0.4);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.ann-del-btn:hover { color: #ff4d4d; }
+.ann-empty { color: var(--muted); font-size: 0.82rem; text-align: center; padding: 16px; }
+
+.ann-export-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+.ann-export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .toolbar { display: none; }
+  .hamburger { display: block; }
+  #navbar { padding: 16px 24px; }
+  section { padding: 70px 24px; }
+  .contact-wrapper { grid-template-columns: 1fr; gap: 40px; }
+  .pricing-card.popular { transform: scale(1); }
+  .pricing-card.popular:hover { transform: translateY(-6px); }
+  .sliders-row { grid-template-columns: 1fr; }
+  .cards-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Needham Auto Cleaning</div>
+  </div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="nav-logo">NAC</div>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#testimonials">Reviews</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="toolbar">
+      <button class="tool-pill" id="shareBtn" title="Copy link to clipboard">🔗 Share</button>
+      <button class="tool-pill" id="darkBtn" title="Toggle dark/light mode">🌙 Dark</button>
+    </div>
+    <button class="hamburger" id="hamburger">&#9776;</button>
+  </nav>
+
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#services">Services</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#testimonials">Reviews</a>
+    <a href="#contact">Contact</a>
+  </div>
+
+  <!-- HERO -->
+  <section id="hero">
+    <canvas id="bubbleCanvas"></canvas>
+    <div class="hero-content">
+      <h1 class="hero-title">Needham Auto Cleaning</h1>
+      <p class="hero-sub">Professional Quality at an Affordable Price</p>
+      <a href="#contact" class="btn-glow">Book Now</a>
+    </div>
+  </section>
+
+  <!-- ANNOUNCEMENT -->
+  <div id="announcement">
+    <div class="announcement-box reveal">
+      <div class="announcement-left">
+        <div class="announcement-label">&#128226; Latest Update</div>
+        <div class="announcement-text">[Placeholder announcement — e.g. "We are open this weekend at Sunnyside Road!"]</div>
+        <div class="announcement-date">April 18, 2026</div>
+      </div>
+      <a href="announcements.html" class="btn-ann">All Updates</a>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <h2 class="section-title reveal">Our Services</h2>
+    <div class="cards-grid">
+      <div class="service-card reveal">
+        <div class="card-icon">🥈</div>
+        <h3>Silver</h3>
+        <p>Hand wash, foam cannon, spotless drying, and tire scrub.</p>
+        <div class="card-price">$15</div>
+      </div>
+      <div class="service-card reveal">
+        <div class="card-icon">🥇</div>
+        <h3>Gold</h3>
+        <p>Everything in Silver plus tire shine and ceramic wax for a lasting finish.</p>
+        <div class="card-price">$20</div>
+      </div>
+      <div class="service-card reveal">
+        <div class="card-icon">🚗</div>
+        <h3>Interior &mdash; Sedan</h3>
+        <p>Full vacuum, trash removal, weather mat washing, surface wipe down, and interior window cleaning.</p>
+        <div class="card-price">$40</div>
+      </div>
+      <div class="service-card reveal">
+        <div class="card-icon">🚙</div>
+        <h3>Interior &mdash; SUV</h3>
+        <p>Full vacuum, trash removal, weather mat washing, surface wipe down, and interior window cleaning.</p>
+        <div class="card-price">$50</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOWCASE -->
+  <section id="gallery">
+    <h2 class="section-title reveal">Showcase</h2>
+    <div class="sliders-row">
+      <div class="gallery-img reveal"><img src="showcase1.jpg" alt="BMW X5 after wash — Needham Auto Cleaning"></div>
+      <div class="gallery-placeholder reveal">✨ Your Car Could Be Here!</div>
+      <div class="gallery-placeholder reveal">✨ Your Car Could Be Here!</div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <h2 class="section-title reveal">Pricing</h2>
+    <div class="pricing-grid">
+      <div class="pricing-card reveal">
+        <div class="pricing-tier">Silver</div>
+        <div class="pricing-price">$15</div>
+        <ul>
+          <li>Hand Wash</li>
+          <li>Foam Cannon</li>
+          <li>Spotless Drying</li>
+          <li>Tire Scrub</li>
+          <li class="disabled">Tire Shine</li>
+          <li class="disabled">Ceramic Wax</li>
+        </ul>
+        <a href="#contact" class="btn-outline book-btn" data-service="Silver ($15)">Book Now</a>
+      </div>
+      <div class="pricing-card popular reveal">
+        <div class="popular-badge">Most Popular</div>
+        <div class="pricing-tier">Gold</div>
+        <div class="pricing-price">$20</div>
+        <ul>
+          <li>Everything in Silver</li>
+          <li>Tire Shine</li>
+          <li>Ceramic Wax</li>
+          <li class="disabled">Interior Clean</li>
+          <li class="disabled">&nbsp;</li>
+          <li class="disabled">&nbsp;</li>
+        </ul>
+        <a href="#contact" class="btn-glow book-btn" data-service="Gold ($20)">Book Now</a>
+      </div>
+      <div class="pricing-card reveal">
+        <div class="pricing-tier">Gold + Interior Bundle</div>
+        <div class="pricing-price">$60<span style="font-size:1rem;color:var(--muted);text-decoration:line-through;margin-left:8px">$70</span></div>
+        <ul>
+          <li>Everything in Gold</li>
+          <li>Full Vacuum</li>
+          <li>Trash Removal</li>
+          <li>Weather Mat Washing</li>
+          <li>Surface Wipe Down</li>
+          <li>Interior Window Cleaning</li>
+        </ul>
+        <a href="#contact" class="btn-outline book-btn" data-service="Gold + Interior Bundle ($60)">Book Now</a>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:24px;color:var(--muted);font-size:0.9rem;">Interior only: Sedan $40 &nbsp;|&nbsp; SUV $50 &nbsp;&nbsp;&bull;&nbsp;&nbsp; Snacks $1 &nbsp;|&nbsp; Gatorade $2 &nbsp;&nbsp;&bull;&nbsp;&nbsp; We accept Cash &amp; Venmo</p>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="testimonials">
+    <h2 class="section-title reveal">What Customers Say</h2>
+    <div class="testimonial-wrapper">
+      <div class="testimonial-track" id="testimonialTrack">
+        <div class="testimonial-card">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p>&ldquo;[Placeholder review &mdash; amazing service, car looks brand new!]&rdquo;</p>
+          <div class="reviewer">&mdash; [Customer Name]</div>
+        </div>
+        <div class="testimonial-card">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p>&ldquo;[Placeholder review &mdash; fast, professional, and great price!]&rdquo;</p>
+          <div class="reviewer">&mdash; [Customer Name]</div>
+        </div>
+        <div class="testimonial-card">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p>&ldquo;[Placeholder review &mdash; best car wash in Needham, highly recommend!]&rdquo;</p>
+          <div class="reviewer">&mdash; [Customer Name]</div>
+        </div>
+      </div>
+      <div class="testimonial-dots" id="testimonialDots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <h2 class="section-title reveal">FAQ</h2>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <button class="faq-q">Do you come to me, or do I come to you? <span class="faq-icon">+</span></button>
+        <div class="faq-a">You come to us! We're located on Sunnyside Road in Needham, near Cricket Field. Just show up during our hours (9:30am&ndash;3pm, Sat &amp; Sun).</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">How long does each service take? <span class="faq-icon">+</span></button>
+        <div class="faq-a">Silver and Gold washes take around 10&ndash;20 minutes. Interior cleaning takes 45&ndash;75 minutes depending on the size of the vehicle. The bundle takes about 90 minutes.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Do I need to do anything before I come? <span class="faq-icon">+</span></button>
+        <div class="faq-a">Just remove any valuables from the interior before dropping off. That's it &mdash; we handle the rest.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">How do I pay? <span class="faq-icon">+</span></button>
+        <div class="faq-a">We accept Cash and Venmo. Payment is due after the service is complete.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Do you work in bad weather? <span class="faq-icon">+</span></button>
+        <div class="faq-a">We operate in good weather conditions. If weather is a concern on your booking day, we'll reach out to reschedule at no charge.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Can I book for multiple cars? <span class="faq-icon">+</span></button>
+        <div class="faq-a">Yes! Just mention it in the message field when you book and we'll sort out the details.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">What areas do you service? <span class="faq-icon">+</span></button>
+        <div class="faq-a">We are based in Needham, MA on Sunnyside Road. You come to us &mdash; just show up during our hours (9:30am&ndash;3pm, Sat &amp; Sun).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <h2 class="section-title reveal">Book / Contact Us</h2>
+    <div class="closed-notice" id="closedNotice">&#128683; CLOSED TEMPORARILY &mdash; We'll be back soon!</div>
+    <div class="closed-notice" id="seasonNotice">&#10052; CLOSED FOR THE SEASON &mdash; We will reopen in Spring!</div>
+    <div class="contact-wrapper">
+      <form class="contact-form reveal" name="contact" netlify method="POST">
+        <input type="hidden" name="form-name" value="contact" />
+        <input type="text" name="name" placeholder="Your Name" />
+        <input type="tel" name="phone" placeholder="Phone Number" />
+        <input type="text" name="car" placeholder="Car Type (e.g. 2020 Honda Civic)" />
+        <select name="service">
+          <option value="">Select a Service</option>
+          <option>Silver ($15)</option>
+          <option>Gold ($20)</option>
+          <option>Interior — Sedan ($40)</option>
+          <option>Interior — SUV ($50)</option>
+          <option>Gold + Interior Bundle ($60)</option>
+        </select>
+        <textarea name="message" placeholder="Any additional info or questions..."></textarea>
+        <button type="submit" class="btn-glow">Send Message</button>
+      </form>
+      <div class="contact-info reveal">
+        <div class="info-block">
+          <h3>Email</h3>
+          <p>needham.auto.cleaning@gmail.com</p>
+        </div>
+        <div class="info-block">
+          <h3>Location</h3>
+          <p>Sunnyside Road, Needham, MA<br/><span style="color:var(--cyan);font-size:0.85rem;">Near Cricket Field</span></p>
+        </div>
+        <div class="info-block">
+          <h3>Payment</h3>
+          <p>Cash &amp; Venmo accepted</p>
+        </div>
+        <div class="info-block">
+          <h3>Hours</h3>
+          <p>Saturday &amp; Sunday: 9:30am &ndash; 3:00pm</p>
+        </div>
+        <div style="border-radius:8px; overflow:hidden; border:1px solid var(--border); height:200px;">
+          <iframe
+            src="https://maps.google.com/maps?q=Sunnyside+Road,+Needham,+MA+02492&output=embed&z=16"
+            width="100%" height="200" style="border:0; display:block; filter:invert(90%) hue-rotate(180deg) saturate(0.8);"
+            loading="lazy" allowfullscreen
+            title="Sunnyside Road, Needham MA"></iframe>
+        </div>
+        <div class="social-links">
+          <a href="https://instagram.com/needham_auto_cleaning" target="_blank" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            Instagram
+          </a>
+          <a href="https://www.facebook.com/needhamautocleaning" target="_blank" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            Facebook
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2026 Needham Auto Cleaning. All rights reserved.</p>
+    <div style="display:flex;justify-content:center;gap:24px;">
+      <button class="owner-login-btn" id="ownerLoginBtn">owner login</button>
+      <button class="owner-login-btn" id="versionBtn">v1.3 changelog</button>
+    </div>
+  </footer>
+
+  <!-- VERSION HISTORY MODAL -->
+  <div class="version-modal" id="versionModal">
+    <div class="version-panel">
+      <button class="modal-close" id="versionClose">&times;</button>
+      <div class="version-title">&#128196; Version History</div>
+
+      <div class="version-entry">
+        <div class="version-tag">v1.3</div>
+        <div class="version-date">April 2026</div>
+        <ul class="version-notes">
+          <li>Firebase backend — global announcements, closed status, submissions</li>
+          <li>Firebase Auth — password out of source code</li>
+          <li>Visitor analytics (total, today, this week, submissions count)</li>
+          <li>Interactive Google Maps embed</li>
+          <li>Season closure notice in contact section</li>
+          <li>Facebook link with logo</li>
+          <li>Instagram logo added to social button</li>
+        </ul>
+      </div>
+
+      <div class="version-entry">
+        <div class="version-tag">v1.2</div>
+        <div class="version-date">April 2026</div>
+        <ul class="version-notes">
+          <li>Owner dashboard with login (Firebase Auth)</li>
+          <li>Announcement maker — post updates visible to all visitors</li>
+          <li>Closed temporarily toggle</li>
+          <li>View form submissions in dashboard</li>
+          <li>FAQ accordion section</li>
+          <li>Announcements page (announcements.html)</li>
+        </ul>
+      </div>
+
+      <div class="version-entry">
+        <div class="version-tag">v1.1</div>
+        <div class="version-date">April 2026</div>
+        <ul class="version-notes">
+          <li>Netlify Forms contact form (100 submissions/month free)</li>
+          <li>Dark / light mode toggle</li>
+          <li>Share button — copies link to clipboard</li>
+          <li>Real business info — pricing, hours, address, email</li>
+          <li>Book Now pre-selects service in contact form</li>
+          <li>Before &amp; After drag sliders in gallery</li>
+        </ul>
+      </div>
+
+      <div class="version-entry">
+        <div class="version-tag">v1.0</div>
+        <div class="version-date">April 2026</div>
+        <ul class="version-notes">
+          <li>Initial launch — single-file site deployed on Netlify</li>
+          <li>Hero with animated bubble canvas</li>
+          <li>Services, Pricing, Testimonials, Contact sections</li>
+          <li>Responsive mobile layout with hamburger menu</li>
+          <li>Scroll reveal animations</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-panel" id="loginPanel">
+      <button class="modal-close" id="loginClose">&times;</button>
+      <div class="modal-logo">NAC</div>
+      <div class="modal-subtitle">Owner Access</div>
+      <input class="modal-input" type="password" id="loginInput" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;" />
+      <div class="modal-error" id="loginError"></div>
+      <button class="btn-glow" id="loginSubmit" style="width:100%;animation:none;">Enter</button>
+    </div>
+  </div>
+
+  <!-- OWNER DASHBOARD MODAL -->
+  <div class="modal-overlay" id="dashboardModal">
+    <div class="owner-dashboard">
+      <button class="modal-close" id="dashClose">&times;</button>
+
+      <!-- Main Menu View -->
+      <div class="dash-view active" id="dashMain">
+        <div class="dashboard-title">Owner Dashboard</div>
+        <div class="dashboard-sub">Welcome back &#128075;</div>
+        <div class="dash-menu">
+          <button class="dash-item" id="goAnnouncements">
+            <span>&#128226; Announcements</span>
+            <span class="dash-arrow">&#8250;</span>
+          </button>
+          <button class="dash-item" id="closedToggleBtn">
+            <span id="closedToggleLabel">&#128683; Mark as Closed Temporarily</span>
+            <span class="dash-arrow" id="closedToggleIcon">&#9711;</span>
+          </button>
+          <button class="dash-item" id="seasonToggleBtn">
+            <span id="seasonToggleLabel">&#10052; Mark as Closed for Season</span>
+            <span class="dash-arrow" id="seasonToggleIcon">&#9711;</span>
+          </button>
+          <button class="dash-item" id="goSubmissions">
+            <span>&#128235; View Submissions</span>
+            <span class="dash-arrow">&#8250;</span>
+          </button>
+          <div class="dash-item disabled">
+            <span>&#128197; Booking Manager</span>
+            <span class="dash-coming">Soon</span>
+          </div>
+          <button class="dash-item" id="goStats">
+            <span>&#128202; Stats &amp; Analytics</span>
+            <span class="dash-arrow">&#8250;</span>
+          </button>
+        </div>
+        <button class="dashboard-logout" id="dashLogout">Log Out</button>
+      </div>
+
+      <!-- Stats View -->
+      <div class="dash-view" id="dashStats">
+        <button class="dash-back" id="statsBack">&#8592; Back</button>
+        <div class="dashboard-title">&#128202; Analytics</div>
+        <div class="dashboard-sub" style="margin-bottom:20px">Live visitor &amp; booking data</div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-num" id="statTotal">—</div>
+            <div class="stat-label">Total Visits</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statToday">—</div>
+            <div class="stat-label">Visits Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statSubs">—</div>
+            <div class="stat-label">Form Submissions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statWeek">—</div>
+            <div class="stat-label">Visits This Week</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submissions Viewer -->
+      <div class="dash-view" id="dashSubmissions">
+        <button class="dash-back" id="subBack">&#8592; Back</button>
+        <div class="dashboard-title">&#128235; Submissions</div>
+        <div class="dashboard-sub" style="margin-bottom:20px">Contact form messages from customers</div>
+        <div class="sub-list" id="subList"></div>
+        <button class="ann-export-btn" style="margin-top:16px" id="subClearAll">&#128465; Clear All</button>
+      </div>
+
+      <!-- Announcement Maker View -->
+      <div class="dash-view" id="dashAnnouncements">
+        <button class="dash-back" id="annBack">&#8592; Back</button>
+        <div class="dashboard-title">&#128226; Announcements</div>
+        <div class="dashboard-sub" style="margin-bottom:20px">Post updates for your customers</div>
+        <input class="ann-field" id="annTitle" type="text" placeholder="Title (e.g. Open this Saturday!)" />
+        <textarea class="ann-field ann-field-msg" id="annBody" placeholder="Message (e.g. Come stop by Sunnyside Road from 9:30am - 3pm!)"></textarea>
+        <button class="ann-post-btn" id="annPost">&#128228; Post Announcement</button>
+        <div class="ann-divider">Posted Announcements</div>
+        <div class="ann-saved-list" id="annSavedList"></div>
+        <button class="ann-export-btn" id="annExport">&#8659; Download Updated Announcements Page</button>
+      </div>
+
+    </div>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+// ===== FIREBASE =====
+var firebaseConfig = {
+  apiKey: "AIzaSyBsuVcxvj5zZX3kZNp1jjq61Md6AThaAes",
+  authDomain: "nac-web-backend.firebaseapp.com",
+  projectId: "nac-web-backend",
+  storageBucket: "nac-web-backend.firebasestorage.app",
+  messagingSenderId: "126832192266",
+  appId: "1:126832192266:web:ed05ca55ce877c1193e8f3"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var auth = firebase.auth();
+var settingsDoc = db.collection('settings').doc('main');
+var analyticsDoc = db.collection('analytics').doc('main');
+
+// Track this page visit
+var todayKey = 'day_' + new Date().toISOString().slice(0, 10).replace(/-/g, '');
+var visitInc = { total: firebase.firestore.FieldValue.increment(1) };
+visitInc[todayKey] = firebase.firestore.FieldValue.increment(1);
+analyticsDoc.set(visitInc, { merge: true });
+
+// ===== OWNER LOGIN =====
+var OWNER_EMAIL = 'needham.auto.cleaning@gmail.com';
+var loginModal = document.getElementById('loginModal');
+var dashboardModal = document.getElementById('dashboardModal');
+var loginPanel = document.getElementById('loginPanel');
+var loginInput = document.getElementById('loginInput');
+var loginError = document.getElementById('loginError');
+
+document.getElementById('ownerLoginBtn').addEventListener('click', function() {
+  loginModal.classList.add('visible');
+  setTimeout(function() { loginInput.focus(); }, 100);
+});
+document.getElementById('loginClose').addEventListener('click', function() {
+  loginModal.classList.remove('visible');
+  loginInput.value = '';
+  loginError.textContent = '';
+});
+document.getElementById('dashClose').addEventListener('click', function() {
+  dashboardModal.classList.remove('visible');
+});
+document.getElementById('dashLogout').addEventListener('click', function() {
+  auth.signOut();
+  dashboardModal.classList.remove('visible');
+});
+document.getElementById('loginSubmit').addEventListener('click', function() {
+  var pass = loginInput.value;
+  if (!pass) return;
+  var submitBtn = document.getElementById('loginSubmit');
+  submitBtn.disabled = true;
+  loginInput.disabled = true;
+  auth.signInWithEmailAndPassword(OWNER_EMAIL, pass)
+    .then(function() {
+      loginModal.classList.remove('visible');
+      dashboardModal.classList.add('visible');
+      loginInput.value = '';
+      loginError.textContent = '';
+    })
+    .catch(function() {
+      loginError.textContent = 'Incorrect password.';
+      loginPanel.classList.remove('shake');
+      void loginPanel.offsetWidth;
+      loginPanel.classList.add('shake');
+      loginInput.value = '';
+      loginInput.focus();
+    })
+    .then(function() {
+      submitBtn.disabled = false;
+      loginInput.disabled = false;
+    });
+});
+loginInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('loginSubmit').click();
+});
+loginModal.addEventListener('click', function(e) {
+  if (e.target === loginModal) {
+    loginModal.classList.remove('visible');
+    loginInput.value = '';
+    loginError.textContent = '';
+  }
+});
+dashboardModal.addEventListener('click', function(e) {
+  if (e.target === dashboardModal) dashboardModal.classList.remove('visible');
+});
+
+// ===== CLOSED NOTICES =====
+var closedBanner = document.getElementById('closedNotice');
+var closedToggleBtn = document.getElementById('closedToggleBtn');
+var closedToggleLabel = document.getElementById('closedToggleLabel');
+var closedToggleIcon = document.getElementById('closedToggleIcon');
+
+function applyClosedState(closed) {
+  if (closed) {
+    closedBanner.classList.add('visible');
+    closedToggleBtn.classList.add('closed-active');
+    closedToggleLabel.textContent = '\uD83D\uDEAB Remove Closed Notice';
+    closedToggleIcon.textContent = '\u25CF';
+  } else {
+    closedBanner.classList.remove('visible');
+    closedToggleBtn.classList.remove('closed-active');
+    closedToggleLabel.textContent = '\uD83D\uDEAB Mark as Closed Temporarily';
+    closedToggleIcon.textContent = '\u25CB';
+  }
+}
+
+closedToggleBtn.addEventListener('click', function() {
+  settingsDoc.get().then(function(doc) {
+    var current = doc.exists ? !!doc.data().closed : false;
+    settingsDoc.set({ closed: !current }, { merge: true });
+  }).catch(function(err) { alert('Firestore error: ' + err.message); });
+});
+
+// ===== SEASON NOTICE =====
+var seasonBanner = document.getElementById('seasonNotice');
+var seasonToggleBtn = document.getElementById('seasonToggleBtn');
+var seasonToggleLabel = document.getElementById('seasonToggleLabel');
+var seasonToggleIcon = document.getElementById('seasonToggleIcon');
+
+function applySeasonState(closed) {
+  if (closed) {
+    seasonBanner.classList.add('visible');
+    seasonToggleBtn.classList.add('closed-active');
+    seasonToggleLabel.textContent = '\u2744 Remove Season Closure Notice';
+    seasonToggleIcon.textContent = '\u25CF';
+  } else {
+    seasonBanner.classList.remove('visible');
+    seasonToggleBtn.classList.remove('closed-active');
+    seasonToggleLabel.textContent = '\u2744 Mark as Closed for Season';
+    seasonToggleIcon.textContent = '\u25CB';
+  }
+}
+
+seasonToggleBtn.addEventListener('click', function() {
+  settingsDoc.get().then(function(doc) {
+    var current = doc.exists ? !!doc.data().closedSeason : false;
+    settingsDoc.set({ closedSeason: !current }, { merge: true });
+  }).catch(function(err) { alert('Firestore error: ' + err.message); });
+});
+
+// ===== ANNOUNCEMENT MAKER =====
+function formatDate(d) {
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+}
+
+function updateMainAnnouncement(list) {
+  var box = document.querySelector('.announcement-box');
+  if (!box || !list || list.length === 0) return;
+  box.querySelector('.announcement-text').textContent = list[0].body;
+  box.querySelector('.announcement-date').textContent = list[0].date;
+}
+
+function renderSavedList(list) {
+  var el = document.getElementById('annSavedList');
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="ann-empty">No announcements posted yet.</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(a, i) {
+    return '<div class="ann-saved-card">' +
+      '<div class="ann-saved-info">' +
+        '<div class="ann-saved-title">' + a.title + '</div>' +
+        '<div class="ann-saved-date">' + a.date + '</div>' +
+        (i === 0 ? '<div class="ann-live-badge">LIVE</div>' : '') +
+      '</div>' +
+      '<button class="ann-del-btn" data-idx="' + i + '">&times;</button>' +
+    '</div>';
+  }).join('');
+  el.querySelectorAll('.ann-del-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idx = parseInt(btn.getAttribute('data-idx'));
+      settingsDoc.get().then(function(doc) {
+        var cur = doc.exists ? (doc.data().announcements || []) : [];
+        cur.splice(idx, 1);
+        settingsDoc.set({ announcements: cur }, { merge: true }).then(function() {
+          renderSavedList(cur);
+        });
+      });
+    });
+  });
+}
+
+// Real-time listener — updates all banners + announcement for ALL visitors
+settingsDoc.onSnapshot(function(doc) {
+  var data = doc.exists ? doc.data() : {};
+  applyClosedState(!!data.closed);
+  applySeasonState(!!data.closedSeason);
+  updateMainAnnouncement(data.announcements || []);
+});
+
+document.getElementById('goAnnouncements').addEventListener('click', function() {
+  document.getElementById('dashMain').classList.remove('active');
+  document.getElementById('dashAnnouncements').classList.add('active');
+  settingsDoc.get().then(function(doc) {
+    renderSavedList(doc.exists ? (doc.data().announcements || []) : []);
+  });
+});
+
+document.getElementById('annBack').addEventListener('click', function() {
+  document.getElementById('dashAnnouncements').classList.remove('active');
+  document.getElementById('dashMain').classList.add('active');
+});
+
+document.getElementById('annPost').addEventListener('click', function() {
+  var title = document.getElementById('annTitle').value.trim();
+  var body  = document.getElementById('annBody').value.trim();
+  if (!title || !body) { alert('Please fill in both the title and message.'); return; }
+  settingsDoc.get().then(function(doc) {
+    var cur = doc.exists ? (doc.data().announcements || []) : [];
+    cur.unshift({ title: title, body: body, date: formatDate(new Date()) });
+    settingsDoc.set({ announcements: cur }, { merge: true }).then(function() {
+      document.getElementById('annTitle').value = '';
+      document.getElementById('annBody').value = '';
+      renderSavedList(cur);
+    });
+  }).catch(function(err) { alert('Firestore error: ' + err.message); });
+});
+
+document.getElementById('annExport').addEventListener('click', function() {
+  settingsDoc.get().then(function(doc) {
+    var list = doc.exists ? (doc.data().announcements || []) : [];
+    var cards = list.length === 0
+      ? '<div class="empty-state">&#128226; No announcements yet.<br/>Log in as owner to post updates.</div>'
+      : list.map(function(a, i) {
+          return '<div class="ann-card">' +
+            '<div class="ann-tag">' + (i === 0 ? 'Latest' : 'Update') + '</div>' +
+            '<div class="ann-title">' + a.title + '</div>' +
+            '<div class="ann-body">' + a.body + '</div>' +
+            '<div class="ann-date">' + a.date + '</div>' +
+          '</div>';
+        }).join('');
+    var content = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<meta name="viewport" content="width=device-width,initial-scale=1.0"/>\n<title>Announcements &mdash; Needham Auto Cleaning</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"/>\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>\n<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>\n<style>\n*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}\n:root{--cyan:#00cfff;--bg:#050a12;--bg2:#0a1220;--card-bg:#0d1a2a;--text:#e8f4ff;--muted:#6a8aaa;--border:rgba(0,207,255,0.12);--font-head:\'Orbitron\',sans-serif;--font-body:\'Inter\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;}\nhtml{scroll-behavior:smooth;}body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;}\nnav{display:flex;align-items:center;justify-content:space-between;padding:20px 48px;background:rgba(5,10,18,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}\n.nav-logo{font-family:var(--font-head);font-size:1.2rem;font-weight:900;color:var(--cyan);letter-spacing:4px;text-decoration:none;text-shadow:0 0 12px var(--cyan);}\n.nav-back{text-decoration:none;color:var(--muted);font-size:0.82rem;letter-spacing:1px;text-transform:uppercase;transition:color 0.2s;}\n.nav-back:hover{color:var(--cyan);}\n.page{max-width:800px;margin:0 auto;padding:60px 48px 100px;}\n.page-title{font-family:var(--font-head);font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:var(--text);letter-spacing:3px;margin-bottom:8px;}\n.page-title::after{content:\'\';display:block;width:50px;height:3px;background:var(--cyan);margin-top:12px;box-shadow:0 0 10px var(--cyan);}\n.page-sub{color:var(--muted);font-size:0.85rem;margin-top:16px;margin-bottom:48px;}\n.ann-list{display:flex;flex-direction:column;gap:20px;}\n.ann-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:28px 32px;transition:border-color 0.2s;}\n.ann-card:first-child{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,207,255,0.08);}\n.ann-card:hover{border-color:rgba(0,207,255,0.3);}\n.ann-tag{display:inline-block;font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:var(--cyan);border:1px solid var(--cyan);border-radius:999px;padding:2px 10px;margin-bottom:12px;text-transform:uppercase;}\n.ann-card:first-child .ann-tag{background:var(--cyan);color:#050a12;}\n.ann-title{font-family:var(--font-head);font-size:0.9rem;letter-spacing:1px;color:var(--text);margin-bottom:10px;}\n.ann-body{color:var(--muted);font-size:0.9rem;line-height:1.7;margin-bottom:14px;}\n.ann-date{color:rgba(106,138,170,0.5);font-size:0.75rem;}\n.empty-state{text-align:center;padding:60px 24px;color:var(--muted);border:2px dashed var(--border);border-radius:12px;font-size:0.9rem;line-height:1.8;}\nfooter{text-align:center;padding:24px;color:rgba(106,138,170,0.4);font-size:0.75rem;border-top:1px solid var(--border);letter-spacing:1px;}\n@media(max-width:768px){nav{padding:16px 24px;}.page{padding:40px 24px 80px;}.ann-card{padding:20px 24px;}}\n</style>\n</head>\n<body>\n<nav>\n<a href="index.html" class="nav-logo">NAC</a>\n<a href="index.html" class="nav-back">&#8592; Back to Site</a>\n</nav>\n<div class="page">\n<div class="page-title">&#128226; Announcements</div>\n<div class="page-sub">Updates, schedule changes, and news from Needham Auto Cleaning.</div>\n<div class="ann-list">' + cards + '</div>\n</div>\n<footer>&copy; 2026 Needham Auto Cleaning</footer>\n</body>\n</html>';
+    var blob = new Blob([content], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'announcements.html';
+    a.click();
+  });
+});
+
+// ===== LOADER =====
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    document.getElementById('loader').classList.add('hidden');
+  }, 1500);
+});
+
+// ===== DARK MODE TOGGLE =====
+var darkBtn = document.getElementById('darkBtn');
+var isLight = false;
+darkBtn.addEventListener('click', function() {
+  isLight = !isLight;
+  document.body.classList.toggle('light-mode', isLight);
+  darkBtn.innerHTML = isLight ? '&#9790; Dark' : '&#9788; Light';
+});
+
+// ===== SHARE PILL =====
+var shareBtn = document.getElementById('shareBtn');
+shareBtn.addEventListener('click', function() {
+  navigator.clipboard.writeText(window.location.href).then(function() {
+    shareBtn.classList.add('copied');
+    shareBtn.innerHTML = '&#10003; Copied!';
+    setTimeout(function() {
+      shareBtn.classList.remove('copied');
+      shareBtn.innerHTML = '&#128279; Share';
+    }, 2000);
+  });
+});
+
+// ===== NAV SCROLL SHRINK =====
+window.addEventListener('scroll', function() {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// ===== HAMBURGER MENU =====
+var hamburger = document.getElementById('hamburger');
+var mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', function() {
+  mobileMenu.classList.toggle('open');
+});
+mobileMenu.querySelectorAll('a').forEach(function(link) {
+  link.addEventListener('click', function() { mobileMenu.classList.remove('open'); });
+});
+
+// ===== ESCAPE KEY - LAYERED RESET =====
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (versionModal.classList.contains('visible')) { versionModal.classList.remove('visible'); return; }
+    if (dashboardModal.classList.contains('visible')) { dashboardModal.classList.remove('visible'); return; }
+    if (loginModal.classList.contains('visible')) { loginModal.classList.remove('visible'); loginInput.value = ''; loginError.textContent = ''; return; }
+    if (mobileMenu.classList.contains('open')) { mobileMenu.classList.remove('open'); return; }
+    if (document.activeElement && document.activeElement !== document.body) { document.activeElement.blur(); return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}, true);
+
+// ===== BUBBLE CANVAS =====
+var canvas = document.getElementById('bubbleCanvas');
+var ctx = canvas.getContext('2d');
+var bubbles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function createBubble() {
+  return {
+    x: Math.random() * canvas.width,
+    y: canvas.height + Math.random() * 100,
+    r: Math.random() * 18 + 4,
+    speed: Math.random() * 0.6 + 0.2,
+    opacity: Math.random() * 0.4 + 0.05,
+    drift: (Math.random() - 0.5) * 0.4
+  };
+}
+
+for (var i = 0; i < 60; i++) {
+  var b = createBubble();
+  b.y = Math.random() * canvas.height;
+  bubbles.push(b);
+}
+
+function drawBubbles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (var i = 0; i < bubbles.length; i++) {
+    var b = bubbles[i];
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,207,255,' + b.opacity + ')';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    var grad = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, 0, b.x, b.y, b.r);
+    grad.addColorStop(0, 'rgba(0,207,255,' + (b.opacity * 0.3) + ')');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    b.y -= b.speed;
+    b.x += b.drift;
+    if (b.y + b.r < 0) {
+      var nb = createBubble();
+      bubbles[i] = nb;
+    }
+  }
+  requestAnimationFrame(drawBubbles);
+}
+drawBubbles();
+
+// ===== SCROLL REVEAL =====
+var revealEls = document.querySelectorAll('.reveal');
+var revealObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry, i) {
+    if (entry.isIntersecting) {
+      setTimeout(function() { entry.target.classList.add('visible'); }, i * 80);
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+revealEls.forEach(function(el) { revealObserver.observe(el); });
+
+// ===== BEFORE & AFTER SLIDER =====
+document.querySelectorAll('.ba-slider').forEach(function(slider) {
+  var after = slider.querySelector('.ba-after');
+  var handle = slider.querySelector('.ba-handle');
+  var dragging = false;
+
+  function setPosition(x) {
+    var rect = slider.getBoundingClientRect();
+    var pct = ((x - rect.left) / rect.width) * 100;
+    pct = Math.max(2, Math.min(98, pct));
+    after.style.clipPath = 'inset(0 0 0 ' + pct + '%)';
+    handle.style.left = pct + '%';
+  }
+
+  slider.addEventListener('mousedown', function(e) { dragging = true; setPosition(e.clientX); });
+  window.addEventListener('mousemove', function(e) { if (dragging) setPosition(e.clientX); });
+  window.addEventListener('mouseup', function() { dragging = false; });
+  slider.addEventListener('touchstart', function(e) { dragging = true; setPosition(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('touchmove', function(e) { if (dragging) setPosition(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('touchend', function() { dragging = false; });
+});
+
+// ===== TESTIMONIAL ROTATOR =====
+var track = document.getElementById('testimonialTrack');
+var dots = document.querySelectorAll('.dot');
+var current = 0;
+var total = dots.length;
+
+function goTo(index) {
+  current = index;
+  track.style.transform = 'translateX(-' + (current * 100) + '%)';
+  dots.forEach(function(d, i) { d.classList.toggle('active', i === current); });
+}
+
+dots.forEach(function(dot, i) { dot.addEventListener('click', function() { goTo(i); }); });
+setInterval(function() { goTo((current + 1) % total); }, 4000);
+
+// ===== BOOK NOW PRE-SELECT =====
+document.querySelectorAll('.book-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var service = btn.getAttribute('data-service');
+    var select = document.querySelector('.contact-form select');
+    if (service && select) {
+      Array.from(select.options).forEach(function(opt) {
+        opt.selected = opt.value === service || opt.text === service;
+      });
+    }
+  });
+});
+
+// ===== VERSION HISTORY =====
+var versionModal = document.getElementById('versionModal');
+document.getElementById('versionBtn').addEventListener('click', function() {
+  versionModal.classList.add('visible');
+});
+document.getElementById('versionClose').addEventListener('click', function() {
+  versionModal.classList.remove('visible');
+});
+versionModal.addEventListener('click', function(e) {
+  if (e.target === versionModal) versionModal.classList.remove('visible');
+});
+
+// ===== FAQ ACCORDION =====
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var item = btn.parentElement;
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  });
+});
+
+// ===== STATS =====
+document.getElementById('goStats').addEventListener('click', function() {
+  document.getElementById('dashMain').classList.remove('active');
+  document.getElementById('dashStats').classList.add('active');
+  var today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  var weekTotal = 0;
+  analyticsDoc.get().then(function(doc) {
+    var data = doc.exists ? doc.data() : {};
+    document.getElementById('statTotal').textContent = data.total || 0;
+    document.getElementById('statToday').textContent = data['day_' + today] || 0;
+    var d = new Date();
+    for (var i = 0; i < 7; i++) {
+      var key = 'day_' + new Date(d.getFullYear(), d.getMonth(), d.getDate() - i).toISOString().slice(0, 10).replace(/-/g, '');
+      weekTotal += data[key] || 0;
+    }
+    document.getElementById('statWeek').textContent = weekTotal;
+  });
+  db.collection('submissions').get().then(function(snap) {
+    document.getElementById('statSubs').textContent = snap.size;
+  });
+});
+
+document.getElementById('statsBack').addEventListener('click', function() {
+  document.getElementById('dashStats').classList.remove('active');
+  document.getElementById('dashMain').classList.add('active');
+});
+
+// ===== SUBMISSIONS =====
+function renderSubmissions(list) {
+  var el = document.getElementById('subList');
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="ann-empty">No submissions yet.</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(s) {
+    return '<div class="sub-card">' +
+      '<div class="sub-card-header">' +
+        '<div>' +
+          '<div class="sub-name">' + s.name + '</div>' +
+          '<div class="sub-date">' + s.date + '</div>' +
+        '</div>' +
+        '<button class="sub-del" data-id="' + s.id + '">&times;</button>' +
+      '</div>' +
+      (s.service ? '<span class="sub-service">' + s.service + '</span>' : '') +
+      '<div class="sub-details">' +
+        (s.phone ? '&#128222; ' + s.phone + '<br/>' : '') +
+        (s.car ? '&#128664; ' + s.car + '<br/>' : '') +
+        (s.message ? '&#128172; ' + s.message : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  el.querySelectorAll('.sub-del').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      db.collection('submissions').doc(btn.getAttribute('data-id')).delete().then(loadAndRenderSubmissions);
+    });
+  });
+}
+
+function loadAndRenderSubmissions() {
+  db.collection('submissions').orderBy('createdAt', 'desc').get().then(function(snap) {
+    var list = [];
+    snap.forEach(function(doc) { var d = doc.data(); d.id = doc.id; list.push(d); });
+    renderSubmissions(list);
+  });
+}
+
+document.getElementById('goSubmissions').addEventListener('click', function() {
+  document.getElementById('dashMain').classList.remove('active');
+  document.getElementById('dashSubmissions').classList.add('active');
+  loadAndRenderSubmissions();
+});
+
+document.getElementById('subBack').addEventListener('click', function() {
+  document.getElementById('dashSubmissions').classList.remove('active');
+  document.getElementById('dashMain').classList.add('active');
+});
+
+document.getElementById('subClearAll').addEventListener('click', function() {
+  if (confirm('Delete all submissions?')) {
+    db.collection('submissions').get().then(function(snap) {
+      var batch = db.batch();
+      snap.forEach(function(doc) { batch.delete(doc.ref); });
+      batch.commit().then(loadAndRenderSubmissions);
+    });
+  }
+});
+
+// ===== CONTACT FORM SUBMIT =====
+document.querySelector('.contact-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var btn = e.target.querySelector('button');
+  var form = e.target;
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  var data = new FormData(form);
+  db.collection('submissions').add({
+    name:      data.get('name')    || '',
+    phone:     data.get('phone')   || '',
+    car:       data.get('car')     || '',
+    service:   data.get('service') || '',
+    message:   data.get('message') || '',
+    date:      formatDate(new Date()),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  fetch('/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(data).toString()
+  }).then(function(response) {
+    if (response.ok) {
+      btn.textContent = 'Sent! ✓';
+      btn.style.background = '#00ff88';
+      btn.style.color = '#050a12';
+      form.reset();
+      setTimeout(function() {
+        btn.textContent = 'Send Message';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.disabled = false;
+      }, 3000);
+    } else {
+      btn.textContent = 'Error — try again';
+      btn.disabled = false;
+      setTimeout(function() { btn.textContent = 'Send Message'; btn.disabled = false; }, 3000);
+    }
+  }).catch(function() {
+    btn.textContent = 'Error — try again';
+    btn.disabled = false;
+    setTimeout(function() { btn.textContent = 'Send Message'; btn.disabled = false; }, 3000);
+  });
+});
+</script>
+</body>
+</html>
